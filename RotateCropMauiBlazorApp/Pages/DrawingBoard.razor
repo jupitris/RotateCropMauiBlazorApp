@@ -1,0 +1,136 @@
+﻿@page "/DrawingBoard"
+
+@using Excubo.Blazor.Canvas
+@using Excubo.Blazor.Canvas.Contexts;
+
+<h3>DrawingBoard</h3>
+
+<Canvas @ref="_canvas" width="@_width" height="@_height"
+        @onmousedown="Canvas_MouseDown"
+        @onmousemove="Canvas_MouseMoveAsync"
+        @onmouseup="Canvas_MouseUp"/>
+
+@code {
+    private Canvas _canvas;
+
+    private float _width = 600f;
+    private float _height = 400f;
+
+    private bool _isMousePressed = false;
+    private bool _isRenderRequired = true;
+    private double _startX, _startY, _mouseX, _mouseY;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // 初回以外はマウスイベントで描画する
+        if (firstRender)
+        {
+            // 中心座標を得る
+            float centerX = _width / 2;
+            float centerY = _height / 2;
+
+            // 矩形座標を得る(LeftTop, LeftTop, RightBottom, LeftBottom)
+            // Canvasの80%サイズで矩形を作成する
+            List<Point> points = new()
+            {
+                new(centerX - (centerX * 0.8f), centerY - (centerY * 0.8f)),
+                new(centerX + (centerX * 0.8f), centerY - (centerY * 0.8f)),
+                new(centerX + (centerX * 0.8f), centerY + (centerY * 0.8f)),
+                new(centerX - (centerX * 0.8f), centerY + (centerY * 0.8f)),
+            };
+
+            // 矩形描画
+            await DrawRectangleAsync(points);
+        }
+    }
+
+    protected override bool ShouldRender() {
+        // falseのときはレンダリングを停止する
+        if (!_isRenderRequired)
+        {
+            _isRenderRequired = true;
+            return false;
+        }
+
+        // trueを返している(=レンダリングする)
+        return base.ShouldRender();
+    }
+
+    private async Task DrawRectangleAsync(List<Point> points)
+    {
+        if (points.Count == 0)
+        {
+            return;
+        }
+
+        await using Context2D context = await _canvas.GetContext2DAsync();
+        await context.ClearRectAsync(0, 0, _width, _height);
+
+        // 線の色と塗りの色を決める
+        // 塗りは半透明
+        await context.StrokeStyleAsync("rgb(255, 0, 0)");
+        await context.FillStyleAsync("rgba(255, 0, 0, 0.2)");
+
+        // 座標を使ってパスを描画する
+        await context.BeginPathAsync();
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            if (i == 0)
+            {
+                // 開始点
+                await context.MoveToAsync(points[i].X, points[i].Y);
+
+            }
+            else
+            {
+                await context.LineToAsync(points[i].X, points[i].Y);
+            }
+        }
+
+        // パスは必ず閉じる(そうしないとコの字型になる)
+        await context.ClosePathAsync();
+
+        // 線と塗りの描画
+        await context.StrokeAsync();
+        await context.FillAsync(FillRule.NonZero);
+    }
+
+    private void Canvas_MouseDown(MouseEventArgs e)
+    {
+        _isRenderRequired = false;
+        _startX = _mouseX = e.OffsetX;
+        _startY = _mouseY = e.OffsetY;
+        _isMousePressed = true;
+    }
+
+    private async Task Canvas_MouseMoveAsync(MouseEventArgs e)
+    {
+        _isRenderRequired = false;
+
+        if (!_isMousePressed)
+        {
+            return;
+        }
+
+        _mouseX = e.OffsetX;
+        _mouseY = e.OffsetY;
+
+        List<Point> points = new()
+        {
+            new(_startX, _startY),
+            new(_mouseX, _startY),
+            new(_mouseX, _mouseY),
+            new(_startX, _mouseY),
+        };
+
+        // 矩形描画
+        await DrawRectangleAsync(points);
+    }
+
+    private void Canvas_MouseUp(MouseEventArgs e)
+    {
+        _isRenderRequired = false;
+        _isMousePressed = false;
+    }
+}
