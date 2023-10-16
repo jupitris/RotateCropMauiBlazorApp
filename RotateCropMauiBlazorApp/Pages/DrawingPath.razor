@@ -1,0 +1,45 @@
+﻿@page "/DrawingPath"
+
+@using Excubo.Blazor.Canvas
+
+<h3>DrawingPath</h3>
+
+<Canvas @ref="_canvas" width="@_width" height="@_height" />
+
+@code {
+    private Canvas _canvas;
+    private float _width = 600f;
+    private float _height = 400f;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await using var context = await _canvas.GetContext2DAsync();
+
+        // 中心座標を得る
+        float centerX = _width / 2;
+        float centerY = _height / 2;
+
+        // 矩形座標を得る(LeftTop, LeftTop, RightBottom, LeftBottom)
+        // Canvasの80%サイズで矩形を作成する
+        Point p0 = new(centerX - (centerX * 0.8f), centerY - (centerY * 0.8f));
+        Point p1 = new(centerX + (centerX * 0.8f), centerY - (centerY * 0.8f));
+        Point p2 = new(centerX + (centerX * 0.8f), centerY + (centerY * 0.8f));
+        Point p3 = new(centerX - (centerX * 0.8f), centerY + (centerY * 0.8f));
+
+        // 線の色と塗りの色を決める
+        // 塗りは半透明
+        await context.StrokeStyleAsync("rgb(255, 0, 0)");
+        await context.FillStyleAsync("rgba(255, 0, 0, 0.2)");
+
+        // 座標を使ってパスを描画する
+        // パスは必ず閉じる(そうしないとコの字型になる)
+        await context.BeginPathAsync();
+        await context.MoveToAsync(p0.X, p0.Y);
+        await context.LineToAsync(p1.X, p1.Y);
+        await context.LineToAsync(p2.X, p2.Y);
+        await context.LineToAsync(p3.X, p3.Y);
+        await context.ClosePathAsync();
+        await context.StrokeAsync();
+        await context.FillAsync(FillRule.NonZero);
+    }
+}
