@@ -12,6 +12,7 @@
 
 @code {
     private Canvas _canvas;
+    private Context2D _context;
 
     private float _width = 600f;
     private float _height = 400f;
@@ -25,6 +26,8 @@
         // 初回以外はマウスイベントで描画する
         if (firstRender)
         {
+            _context = await _canvas.GetContext2DAsync();
+
             // 中心座標を得る
             float centerX = _width / 2;
             float centerY = _height / 2;
@@ -63,37 +66,36 @@
             return;
         }
 
-        await using Context2D context = await _canvas.GetContext2DAsync();
-        await context.ClearRectAsync(0, 0, _width, _height);
+        await _context.ClearRectAsync(0, 0, _width, _height);
 
         // 線の色と塗りの色を決める
         // 塗りは半透明
-        await context.StrokeStyleAsync("rgb(255, 0, 0)");
-        await context.FillStyleAsync("rgba(255, 0, 0, 0.2)");
+        await _context.StrokeStyleAsync("rgb(255, 0, 0)");
+        await _context.FillStyleAsync("rgba(255, 0, 0, 0.2)");
 
         // 座標を使ってパスを描画する
-        await context.BeginPathAsync();
+        await _context.BeginPathAsync();
 
         for (int i = 0; i < points.Count; i++)
         {
             if (i == 0)
             {
                 // 開始点
-                await context.MoveToAsync(points[i].X, points[i].Y);
+                await _context.MoveToAsync(points[i].X, points[i].Y);
 
             }
             else
             {
-                await context.LineToAsync(points[i].X, points[i].Y);
+                await _context.LineToAsync(points[i].X, points[i].Y);
             }
         }
 
         // パスは必ず閉じる(そうしないとコの字型になる)
-        await context.ClosePathAsync();
+        await _context.ClosePathAsync();
 
         // 線と塗りの描画
-        await context.StrokeAsync();
-        await context.FillAsync(FillRule.NonZero);
+        await _context.StrokeAsync();
+        await _context.FillAsync(FillRule.NonZero);
     }
 
     private void Canvas_MouseDown(MouseEventArgs e)
