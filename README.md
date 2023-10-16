@@ -23,3 +23,10 @@ git clone https://github.com/jupitris/RotateCropMauiBlazorApp.git
 `Crop Image` において、初期表示する矩形がバックバッファからフロントバッファに複写されない事象があります。
 あとはスライダーに連動した矩形の動きがいまいちな感じです。その他、きっちり動作検証しているわけではないので、動きのおかしな部分があると思います。
 大目に見てください。
+
+# Demo
+
+デモは0.1.1を使用してキャプチャしています。
+
+https://github.com/jupitris/RotateCropMauiBlazorApp/assets/728581/541fe906-fd21-4e3d-b2c3-cdaacc4ef98b
+
